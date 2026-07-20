@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>駐車場予約 / Parking Reservation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#1C1F23;
+    --paper:#FFFFFF;
+    --line:#D8DCE0;
+    --field:#F5F6F7;
+    --sign:#0B5FA5;
+    --full:#B3261E;
+    --muted:#6E767E;
+    --num:'Barlow Semi Condensed',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',system-ui,sans-serif;color:var(--asphalt);background:var(--paper);
+       line-height:1.7;-webkit-font-smoothing:antialiased;padding:16px}
+  .wrap{max-width:520px;margin:0 auto}
+
+  /* 英語併記の共通スタイル */
+  .en{color:var(--muted);font-weight:400}
+
+  /* ---- サイズ制限・注意 ---- */
+  .spec{border:1px solid var(--line);border-radius:2px;background:var(--field);
+    padding:12px 14px;margin-bottom:16px;font-size:12px;line-height:1.7}
+  .spec h3{font-size:12px;font-weight:700;margin-bottom:4px}
+  .spec .dim{font-family:var(--num);font-size:15px;font-weight:600;letter-spacing:.02em}
+  .spec .warn{color:var(--full);font-weight:700;margin-top:4px}
+  .spec .en{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+    /* ---- 満車時の案内（日付選択の下）---- */
+  .full-note{border:1px solid var(--line);border-radius:2px;background:var(--field);
+    padding:12px 14px;margin-top:16px;font-size:12px;line-height:1.7}
+  .full-note .en{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+  .full-note .map-btn{color:var(--sign);font-size:13px;font-weight:700;text-decoration:none;
+    display:inline-block;border:1px solid var(--sign);border-radius:2px;padding:8px 12px;margin-top:10px}
+  
+  /* ---- ヘッダー：駐車場の路面標示を意識した白線ブロック ---- */
+  .head{border:2px solid var(--asphalt);padding:14px 16px;margin-bottom:24px}
+  .head h1{font-size:17px;font-weight:700;letter-spacing:.02em}
+  .head h1 .en{display:block;font-size:12px;margin-top:1px}
+  .head .price{font-family:var(--num);font-size:15px;color:var(--muted);letter-spacing:.04em;margin-top:8px}
+  .head .price b{font-size:22px;color:var(--asphalt);font-weight:700}
+  .head .price-en{font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px}
+
+  .sec{margin-bottom:28px}
+  .sec>h2{font-size:13px;font-weight:700;letter-spacing:.08em;padding-bottom:6px;
+           border-bottom:2px solid var(--asphalt);margin-bottom:12px}
+  .sec>h2 .en{font-size:11px;letter-spacing:0;margin-left:8px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .hint .en{display:block;font-size:11px;margin-top:2px;opacity:.9}
+
+  /* ---- 台数 ---- */
+  .counts{display:flex;gap:8px;flex-wrap:wrap}
+  .counts button{flex:1;min-width:52px;border:1px solid var(--line);background:var(--paper);
+    padding:12px 0;font-family:var(--num);font-size:20px;font-weight:700;cursor:pointer;
+    border-radius:2px;color:var(--asphalt)}
+  .counts button[aria-pressed="true"]{background:var(--sign);border-color:var(--sign);color:#fff}
+  .counts button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
+
+  /* ---- カレンダー ---- */
+  .nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .nav b{font-family:var(--num);font-size:19px;letter-spacing:.03em}
+  .nav button{border:1px solid var(--line);background:var(--paper);width:38px;height:38px;
+    cursor:pointer;border-radius:2px;font-size:15px;color:var(--asphalt)}
+  .nav button:disabled{opacity:.3;cursor:default}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:10px;color:var(--muted);
+       text-align:center;margin-bottom:4px;line-height:1.3}
+  .dow span:first-child{color:var(--full)}
+  .dow span:last-child{color:var(--sign)}
+  .dow i{display:block;font-style:normal;font-family:var(--num);font-size:9px;opacity:.75}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cell{aspect-ratio:1/1.12;border:1px solid var(--line);border-radius:2px;background:var(--paper);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+    padding:0;font-family:inherit;color:var(--asphalt)}
+  .cell .d{font-family:var(--num);font-size:12px;color:var(--muted);line-height:1}
+  .cell .n{font-family:var(--num);font-size:21px;font-weight:700;line-height:1.1}
+  .cell .u{font-size:9px;color:var(--muted);line-height:1}
+  .cell.empty{border:none;cursor:default}
+  .cell.off{background:var(--field);color:#B8BEC4;cursor:default}
+  .cell.off .d,.cell.off .n,.cell.off .u{color:#B8BEC4}
+  .cell.full{cursor:default;color:var(--full);border-color:#F0C9C6;
+    background:repeating-linear-gradient(-45deg,#FDF3F2 0 6px,#FBE8E6 6px 12px)}
+  .cell.full .n{font-size:13px}
+  .cell.sel{background:var(--sign);border-color:var(--sign);color:#fff}
+  .cell.sel .d,.cell.sel .n,.cell.sel .u{color:#fff}
+  .cell:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
+  .loading{text-align:center;color:var(--muted);font-size:13px;padding:48px 0}
+
+  /* ---- 選択サマリ ---- */
+  .sum{border:2px solid var(--asphalt);padding:14px 16px;margin-top:16px}
+  .sum .none{color:var(--muted);font-size:13px}
+  .sum ul{list-style:none;font-size:13px}
+  .sum li{display:flex;justify-content:space-between;padding:3px 0}
+  .sum li span{font-family:var(--num);font-size:15px}
+  .sum .total{display:flex;justify-content:space-between;align-items:baseline;
+    border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+  .sum .total b{font-family:var(--num);font-size:26px;font-weight:700}
+  .sum .pay{font-size:11px;color:var(--muted)}
+
+  /* ---- フォーム ---- */
+  label{display:block;font-size:12px;font-weight:500;margin-bottom:4px}
+  label .en{font-size:11px;margin-left:6px}
+  label i{color:var(--full);font-style:normal;font-size:10px;margin-left:4px}
+  label i.opt{color:var(--muted)}
+  .f{margin-bottom:14px}
+  input,select,textarea{width:100%;border:1px solid var(--line);border-radius:2px;padding:11px 12px;
+    font-family:inherit;font-size:16px;background:var(--paper);color:var(--asphalt)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sign);box-shadow:0 0 0 3px rgba(11,95,165,.15)}
+  textarea{resize:vertical;min-height:70px}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+  /* ---- 同意 ---- */
+  .agree{border:2px solid var(--asphalt);padding:14px 16px;margin:20px 0 8px;
+    display:flex;gap:12px;align-items:flex-start;cursor:pointer}
+  .agree input{width:22px;height:22px;flex:0 0 22px;margin:1px 0 0;accent-color:var(--sign);cursor:pointer}
+  .agree>span{font-size:13px;line-height:1.65}
+  .agree .ag-en{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin-top:6px}
+  .agree .ok{display:block;font-weight:700;margin-top:8px}
+
+  .go{width:100%;background:var(--sign);color:#fff;border:none;border-radius:2px;padding:16px;
+    font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+  .go:disabled{background:#9AA3AB;cursor:default}
+  .go:focus-visible{outline:3px solid var(--asphalt);outline-offset:2px}
+
+  .msg{padding:14px 16px;font-size:13px;border-radius:2px;margin-top:16px}
+  .msg.err{background:#FDF3F2;border:1px solid #F0C9C6;color:var(--full)}
+  .msg.ok{background:#F1F6FA;border:1px solid #C5DAEA;color:var(--sign)}
+  .msg .en-msg{display:block;margin-top:6px;font-size:11px;line-height:1.55;opacity:.85}
+  /* ---- 完了画面 ---- */
+  .done{border:2px solid var(--sign);padding:28px 20px;text-align:center}
+  .done .mark{width:56px;height:56px;border-radius:50%;background:var(--sign);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;line-height:1}
+  .done h1{font-size:19px;font-weight:700}
+  .done h1 .en{display:block;font-size:12px;margin-top:2px}
+  .done .lead{font-size:13px;margin-top:12px;line-height:1.75}
+  .done .lead b{border-bottom:2px solid var(--sign)}
+  .done .lead .en{display:block;font-size:11px;margin-top:4px}
+  .done table{width:100%;border-collapse:collapse;margin:22px 0;text-align:left;font-size:13px}
+  .done th{color:var(--muted);font-weight:400;font-size:11px;padding:8px 12px 8px 0;
+    vertical-align:top;white-space:nowrap;border-bottom:1px solid var(--line)}
+  .done td{padding:8px 0;vertical-align:top;border-bottom:1px solid var(--line)}
+  .done td b{font-family:var(--num);font-size:20px;font-weight:700}
+  .done .cone{font-size:12px;color:var(--muted);text-align:left;background:var(--field);
+    padding:12px 14px;line-height:1.7}
+  .done .again{margin-top:20px;background:var(--paper);color:var(--asphalt);border:1px solid var(--line);
+    border-radius:2px;padding:13px 24px;font-family:inherit;font-size:13px;cursor:pointer;width:100%}
+
+  .note{font-size:11px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:12px}
+  .note .en{display:block;margin-top:4px;opacity:.9}
+
+  /* ---- 送信中オーバーレイ ---- */
+  .ov{position:fixed;inset:0;background:rgba(255,255,255,.88);display:none;
+    align-items:center;justify-content:center;flex-direction:column;z-index:9999}
+  .ov.on{display:flex}
+  .ov .sp{width:44px;height:44px;border:4px solid var(--line);border-top-color:var(--sign);
+    border-radius:50%;animation:spin .8s linear infinite}
+  .ov p{margin-top:16px;font-size:14px;font-weight:700;color:var(--ink)}
+  .ov p .en{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:no-preference){
+    .cell{transition:background .12s ease,border-color .12s ease}
+  }
+</style>
+</head>
+<body>
+<div class="ov" id="ov"><div class="sp"></div><p>予約を処理しています<span class="en">Processing your reservation. Please wait a few seconds.</span><span style="display:block;font-size:12px;font-weight:400;margin-top:4px">数秒お待ちください</span></p></div>
+<div class="wrap" id="app">
+
+  <div class="head">
+    <h1><span id="cfg-facility"></span> 駐車場<span class="en"><span id="cfg-facility-en"></span> — Parking Reservation</span></h1>
+    <p class="price">1台1泊 <b id="cfg-price"></b> 円 ／ 現地払い ／ ご宿泊のお客様専用</p>
+    <p class="price-en">JPY <span id="cfg-price-en"></span> per car per night / Pay at the front desk / For staying guests only</p>
+  </div>
+
+  <div class="spec">
+    <h3>駐車可能サイズ / Vehicle size limit</h3>
+    <div class="dim">車長 500cm以内 ・ 車幅 190cm以内 ・ 車高 制限なし</div>
+    <div class="warn">バス・トラックは駐車できません。</div>
+    <span class="en">Length ≤ 500cm, Width ≤ 190cm, Height: no limit. Buses and trucks cannot be parked.</span>
+  </div>
+
+  <div class="sec">
+    <h2>1. 台数を選ぶ<span class="en">Number of cars</span></h2>
+    <div class="counts" id="counts" role="group" aria-label="台数 / Number of cars"></div>
+    <p class="hint">台数によって空いている日が変わります。先にお選びください。
+      <span class="en">Availability depends on the number of cars, so please choose this first.</span></p>
+  </div>
+
+  <div class="sec">
+    <h2>2. 停める日を選ぶ<span class="en">Dates</span></h2>
+    <div class="nav">
+      <button id="prev" aria-label="前の月 / Previous month">◀</button>
+      <b id="ym"></b>
+      <button id="next" aria-label="次の月 / Next month">▶</button>
+    </div>
+    <div class="dow">
+      <span>日<i>Sun</i></span><span>月<i>Mon</i></span><span>火<i>Tue</i></span><span>水<i>Wed</i></span>
+      <span>木<i>Thu</i></span><span>金<i>Fri</i></span><span>土<i>Sat</i></span>
+    </div>
+    <div class="grid" id="grid"><div class="loading">空車状況を読み込んでいます / Loading availability</div></div>
+    <p class="hint">数字は空いている台数です。連続していない日も選べます（例：1泊目と3泊目だけ）。チェックアウト日は選ばないでください。翌朝12時までご利用いただけます。
+      <span class="en">The number shows how many spaces are free. You may select non-consecutive dates.
+        Do not select your check-out date — parking is available until 12:00 noon the next day.</span></p>
+
+    <div class="sum" id="sum"><p class="none">日付が選ばれていません / No dates selected</p></div>
+
+    <div class="full-note">
+      ホテル駐車場のキャンセル待ちはお受けできません。満車の場合は近隣コインパーキングをご利用ください。
+      <span class="en">We cannot accept waitlists. If full, please use a nearby coin parking lot.</span>
+      <span id="map-wrap" hidden>
+      <a class="map-btn" href="#" target="_blank" rel="noopener">📍 近隣のコインパーキングを地図で探す / Find nearby coin parking on the map</a>
+      <span class="en" style="margin-top:2px">空車状況は各駐車場でご確認ください。 / Please check availability at each parking lot.</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>3. お客様情報<span class="en">Your details</span></h2>
+
+    <div class="f"><label for="name">お名前<span class="en">Name</span><i>必須 / Required</i></label>
+      <input id="name" autocomplete="name"></div>
+
+    <div class="f"><label for="kana">お名前（カナ）<span class="en">Name in katakana or roman letters</span><i>必須 / Required</i></label>
+      <input id="kana" autocomplete="off"></div>
+
+    <div class="f"><label for="email">メールアドレス<span class="en">Email</span><i>必須 / Required</i></label>
+      <input id="email" type="email" inputmode="email" autocomplete="email">
+      <p class="hint">ご予約の控えをお送りします。届かない場合は迷惑メールフォルダをご確認ください。
+        <span class="en">We will send your confirmation here. If it does not arrive, please check your spam folder.</span></p></div>
+
+    <div class="f"><label for="tel">電話番号<span class="en">Phone number</span><i>必須 / Required</i></label>
+      <input id="tel" type="tel" inputmode="tel" autocomplete="tel"></div>
+
+    <div class="f"><label for="route">ご宿泊の予約サイト<span class="en">Where you booked your room</span></label>
+      <select id="route">
+        <option value="">選択してください / Please select</option>
+        <option>公式サイト / Official website</option>
+        <option>じゃらん</option><option>楽天トラベル</option>
+        <option>一休</option><option>Yahoo!トラベル</option><option>Booking.com</option>
+        <option>Agoda</option><option>電話 / Phone</option><option>その他 / Other</option>
+      </select>
+      <p class="hint">ご宿泊の予約と照合するために伺っています。
+        <span class="en">We use this to match your parking booking with your room reservation.</span></p></div>
+
+    <div class="f"><label for="plate">車種・ナンバー<span class="en">Car model and licence plate</span><i class="opt">任意 / Optional</i></label>
+      <input id="plate" placeholder="例 / e.g. 白 プリウス 品川 300 あ 12-34"></div>
+
+    <div class="f"><label for="note">ご要望など<span class="en">Requests</span><i class="opt">任意 / Optional</i></label>
+      <textarea id="note"></textarea></div>
+
+    <div class="hp"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"></div>
+
+    <label class="agree" for="agree">
+      <input type="checkbox" id="agree">
+      <span><span id="cfg-consent"></span>
+        <span class="ag-en" id="cfg-consent-en"></span>
+        <span class="ok">上記に同意します。／ I agree to the above.</span>
+      </span>
+    </label>
+
+    <button class="go" id="go">この内容で予約する / Book now</button>
+    <div id="msg"></div>
+  </div>
+
+  <p class="note"><span class="cfg-nearby"></span>
+    <span class="en cfg-nearby-en"></span>
+    お問い合わせは<a href="#" data-cfg-contact target="_blank" rel="noopener" style="color:#0B5FA5">公式サイトのお問い合わせフォーム</a>よりお願いいたします。
+    <span class="en">For enquiries, please use the <a href="#" data-cfg-contact target="_blank" rel="noopener" style="color:#0B5FA5">contact form</a> on our website.</span>
+  </p>
+</div>
+
+<div class="wrap" id="done" hidden>
+  <div class="done">
+    <div class="mark">&#10003;</div>
+    <h1>ご予約が完了しました<span class="en">Your reservation is complete</span></h1>
+    <p class="lead">ご予約確認メールを <b id="d-mail"></b> へ送信しました。
+      <span class="en">A confirmation email has been sent to the address above.</span></p>
+    <table>
+      <tr><th>予約番号<br><span class="en">Booking no.</span></th><td id="d-id"></td></tr>
+      <tr><th>ご利用日<br><span class="en">Dates</span></th><td id="d-dates"></td></tr>
+      <tr><th>台数<br><span class="en">Cars</span></th><td id="d-count"></td></tr>
+      <tr><th>料金<br><span class="en">Total</span></th><td><b id="d-total"></b> 円<br>
+        <span class="en">Pay at the front desk on the day of your stay.</span></td></tr>
+    </table>
+    <p class="cone">ご到着の際は、駐車場に置いてあるコーンを移動して駐車してご利用ください。
+      <span class="en" style="display:block;margin-top:4px">On arrival, move the traffic cone in the parking lot and park in that space.</span></p>
+    <button class="again" id="again">続けて予約する / Book another</button>
+  </div>
+  <p class="note"><span class="cfg-nearby"></span>
+    <span class="en cfg-nearby-en"></span>
+    お問い合わせは<a href="#" data-cfg-contact target="_blank" rel="noopener" style="color:#0B5FA5">公式サイトのお問い合わせフォーム</a>よりお願いいたします。
+    <span class="en">For enquiries, please use the <a href="#" data-cfg-contact target="_blank" rel="noopener" style="color:#0B5FA5">contact form</a> on our website.</span>
+  </p>
+</div>
+
+<script>
+  // ===== 案Z：GAS APIの呼び出し口 =====
+  // デプロイをやり直してURLが変わったときは、この1行だけ差し替える
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwu2E3Q9009WS3-OREz_Ck3nvA7wAxXL5wDFYIzmls0XlI2Sg0cQIjmIkO6TK3JtbUI/exec';
+  function api(action, data){
+    // Content-Typeを指定しない単純POST（プリフライト回避）。GAS側のdoPostがJSONで応える
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action: action }, data || {})) })
+      .then(function(r){ return r.json(); });
+  }
+  let CFG = null;
+  const state = { count:1, sel:new Set(), avail:{}, cur:null, busy:false };
+
+  const pad = n => ('0'+n).slice(-2);
+  const key = (y,m,d) => y+'-'+pad(m+1)+'-'+pad(d);
+  const jp  = s => { const p=s.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]);
+                     return +p[1]+'月'+(+p[2])+'日（'+'日月火水木金土'[d.getDay()]+'）'; };
+
+  let counts, minYM, maxYM;
+  function initApp(){
+
+  // ---- 台数ボタン ----
+  counts = document.getElementById('counts');
+  for(let i=1;i<=CFG.maxCount;i++){
+    const b=document.createElement('button');
+    b.textContent=i; b.dataset.n=i;
+    b.setAttribute('aria-pressed', i===1?'true':'false');
+    b.onclick=()=>{ state.count=i; state.sel.clear();
+      [...counts.children].forEach(c=>c.setAttribute('aria-pressed', c===b?'true':'false'));
+      render(); };
+    counts.appendChild(b);
+  }
+
+  // ---- 月移動 ----
+  minYM = CFG.minDate.slice(0,7); maxYM = CFG.maxDate.slice(0,7);
+  state.cur = minYM;
+  document.getElementById('prev').onclick = () => move(-1);
+  document.getElementById('next').onclick = () => move(1);
+  function move(step){
+    const [y,m] = state.cur.split('-').map(Number);
+    const d = new Date(y, m-1+step, 1);
+    const ym = d.getFullYear()+'-'+pad(d.getMonth()+1);
+    if(ym < minYM || ym > maxYM) return;
+    state.cur = ym; load();
+  }
+
+  function load(){
+    document.getElementById('grid').innerHTML =
+      '<div class="loading">空車状況を読み込んでいます / Loading availability</div>';
+    api('availability', { ym: state.cur })
+      .then(r=>{ if(!r || !r.ok) throw 0;
+        state.avail = Object.assign(state.avail, r.availability); render(); })
+      .catch(()=>{ document.getElementById('grid').innerHTML =
+        '<div class="loading">空車状況を読み込めませんでした。再読み込みしてください。<br>Could not load availability. Please reload the page.</div>'; });
+  }
+
+  function render(){
+    const [y,m] = state.cur.split('-').map(Number);
+    document.getElementById('ym').textContent = y+'年'+m+'月 / '+y+'-'+pad(m);
+    document.getElementById('prev').disabled = (state.cur <= minYM);
+    document.getElementById('next').disabled = (state.cur >= maxYM);
+
+    const first = new Date(y, m-1, 1), days = new Date(y, m, 0).getDate();
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for(let i=0;i<first.getDay();i++){ const e=document.createElement('div'); e.className='cell empty'; grid.appendChild(e); }
+
+    for(let d=1; d<=days; d++){
+      const k = key(y, m-1, d);
+      const b = document.createElement('button');
+      b.className = 'cell';
+      const remain = state.avail[k];
+
+      if(remain === undefined){
+        b.className += ' off'; b.disabled = true;
+        b.innerHTML = '<span class="d">'+d+'</span><span class="n">–</span>';
+      } else if(remain < state.count){
+        b.className += ' full'; b.disabled = true;
+        b.innerHTML = '<span class="d">'+d+'</span><span class="n">満</span>';
+        b.title = CFG.fullMsg + ' / ' + CFG.fullMsgEn;
+      } else {
+        if(state.sel.has(k)) b.className += ' sel';
+        b.innerHTML = '<span class="d">'+d+'</span><span class="n">'+remain+'</span><span class="u">台</span>';
+        b.setAttribute('aria-pressed', state.sel.has(k)?'true':'false');
+        b.onclick = ()=>{ state.sel.has(k) ? state.sel.delete(k) : state.sel.add(k); render(); };
+      }
+      grid.appendChild(b);
+    }
+    summary();
+  }
+
+  function summary(){
+    const el = document.getElementById('sum');
+    const list = [...state.sel].sort();
+    if(!list.length){ el.innerHTML = '<p class="none">日付が選ばれていません / No dates selected</p>'; return; }
+    const total = list.length * state.count * CFG.price;
+    el.innerHTML =
+      '<ul>'+list.map(k=>'<li>'+jp(k)+'<span>'+state.count+' 台</span></li>').join('')+'</ul>'+
+      '<div class="total"><div>合計 <span class="pay">（現地払い / Pay on site）</span></div><b>'+total.toLocaleString()+' 円</b></div>';
+  }
+
+  // ---- 送信 ----
+  document.getElementById('go').onclick = () => {
+    if(state.busy) return;
+    const msg = document.getElementById('msg');
+    const payload = {
+      name:  v('name'), kana: v('kana'), email: v('email'), tel: v('tel'),
+      route: v('route'), plate: v('plate'), note: v('note'), website: v('website'),
+      count: state.count, dates: [...state.sel].sort(),
+      agree: document.getElementById('agree').checked
+    };
+    if(!payload.dates.length){
+      show('err','ご利用日をお選びください。<span class="en-msg">Please select the dates you need parking.</span>'); return; }
+    if(!payload.agree){
+      show('err','ご宿泊予約に関する確認事項にご同意ください。<span class="en-msg">Please agree to the confirmation regarding your room reservation.</span>'); return; }
+
+    state.busy = true;
+    const go = document.getElementById('go');
+    go.disabled = true; go.textContent = '予約しています / Booking';
+    document.getElementById('ov').classList.add('on');
+    msg.innerHTML = '';
+
+    api('create', { payload: payload })
+      .then(r=>{
+        state.busy = false; go.disabled = false; go.textContent = 'この内容で予約する / Book now';
+        document.getElementById('ov').classList.remove('on');
+        if(r && r.ok){ showDone(r); } else { show('err', (r && r.message) || 'エラーが発生しました。'); }
+      })
+      .catch(()=>{
+        state.busy = false; go.disabled = false; go.textContent = 'この内容で予約する / Book now';
+        document.getElementById('ov').classList.remove('on');
+        show('err','送信できませんでした。時間をおいてお試しいただくか、公式サイトのお問い合わせフォームよりご連絡ください。<span class="en-msg">Could not submit. Please try again later, or contact us via the form on our website.</span>');
+      });
+  };
+
+  // 予約完了：フォームを隠して完了画面に切り替える
+  function showDone(r){
+    document.getElementById('d-mail').textContent  = r.emailMasked;
+    document.getElementById('d-id').textContent    = r.id;
+    document.getElementById('d-dates').innerHTML   = r.datesJp.join('<br>');
+    document.getElementById('d-count').textContent = r.count + ' 台';
+    document.getElementById('d-total').textContent = r.total.toLocaleString();
+    document.getElementById('app').hidden  = true;
+    document.getElementById('done').hidden = false;
+    try { window.scrollTo(0, 0); } catch(e){}
+  }
+
+  // 続けて予約する：入力を空にしてフォームへ戻る
+  document.getElementById('again').onclick = () => {
+    state.sel.clear();
+    ['name','kana','email','tel','plate','note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('route').value = '';
+    document.getElementById('agree').checked = false;
+    document.getElementById('msg').innerHTML = '';
+    document.getElementById('done').hidden = true;
+    document.getElementById('app').hidden  = false;
+    try { window.scrollTo(0, 0); } catch(e){}
+    load();
+  };
+
+  const v = id => document.getElementById(id).value.trim();
+  function show(kind, text){
+    const m = document.getElementById('msg');
+    m.innerHTML = '<div class="msg '+kind+'">'+text+'</div>';
+    m.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  load();
+
+  } // ---- initApp ここまで ----
+
+  function fillCfg(){
+    document.getElementById('cfg-facility').textContent = CFG.facility;
+    document.getElementById('cfg-facility-en').textContent = CFG.facilityEn;
+    document.getElementById('cfg-price').textContent = Number(CFG.price).toLocaleString();
+    document.getElementById('cfg-price-en').textContent = Number(CFG.price).toLocaleString();
+    document.getElementById('cfg-consent').textContent = CFG.consent;
+    document.getElementById('cfg-consent-en').textContent = CFG.consentEn;
+    document.querySelectorAll('.cfg-nearby').forEach(e=>e.textContent = CFG.nearby);
+    document.querySelectorAll('.cfg-nearby-en').forEach(e=>e.textContent = CFG.nearbyEn);
+    document.querySelectorAll('[data-cfg-contact]').forEach(a=>a.href = CFG.contactUrl);
+    if (CFG.mapSearchUrl){
+      document.getElementById('map-wrap').hidden = false;
+      document.querySelector('.map-btn').href = CFG.mapSearchUrl;
+    }
+    document.title = CFG.facility + ' 駐車場予約';
+  }
+
+  api('config').then(function(c){
+    if(!c || !c.ok) throw 0;
+    CFG = c;
+    fillCfg();
+    initApp();
+  }).catch(function(){
+    document.getElementById('grid').innerHTML =
+      '<div class="loading">読み込めませんでした。時間をおいて再読み込みしてください。<br>Could not load. Please reload later.</div>';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>駐車場予約の変更 / Change reservation</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1C1F23;--line:#D8DCE0;--field:#F5F6F7;--sign:#0B5FA5;--full:#B3261E;--muted:#6E767E;
+    --num:'Barlow Semi Condensed',system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',system-ui,sans-serif;color:var(--ink);background:#fff;
+    line-height:1.7;padding:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:520px;margin:0 auto}
+  .en{color:var(--muted);font-weight:400}
+  h1{font-size:17px;font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:6px}
+  h1 .en{display:block;font-size:12px;margin-top:2px}
+  .who{font-size:13px;color:var(--muted);margin-bottom:22px}
+  .sec>h2{font-size:13px;font-weight:700;letter-spacing:.06em;padding-bottom:6px;
+    border-bottom:2px solid var(--ink);margin:24px 0 12px}
+  .sec>h2 .en{font-size:11px;margin-left:8px}
+  .counts{display:flex;gap:8px;flex-wrap:wrap}
+  .counts button{flex:1;min-width:48px;border:1px solid var(--line);background:#fff;padding:11px 0;
+    font-family:var(--num);font-size:19px;font-weight:700;border-radius:2px;cursor:pointer;color:var(--ink)}
+  .counts button[aria-pressed="true"]{background:var(--sign);border-color:var(--sign);color:#fff}
+  .nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .nav b{font-family:var(--num);font-size:18px}
+  .nav button{border:1px solid var(--line);background:#fff;width:36px;height:36px;border-radius:2px;cursor:pointer}
+  .nav button:disabled{opacity:.3}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:10px;color:var(--muted);text-align:center}
+  .dow span:first-child{color:var(--full)}.dow span:last-child{color:var(--sign)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:2px}
+  .cell{aspect-ratio:1/1.08;border:1px solid var(--line);border-radius:2px;background:#fff;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .cell .d{font-family:var(--num);font-size:12px;color:var(--muted);line-height:1}
+  .cell .n{font-family:var(--num);font-size:19px;font-weight:700;line-height:1.1}
+  .cell.empty{border:none;cursor:default}
+  .cell.off{background:var(--field);color:#B8BEC4;cursor:default}
+  .cell.off .d,.cell.off .n{color:#B8BEC4}
+  .cell.full{cursor:default;color:var(--full);border-color:#F0C9C6;
+    background:repeating-linear-gradient(-45deg,#FDF3F2 0 6px,#FBE8E6 6px 12px)}
+  .cell.full .n{font-size:12px}
+  .cell.sel{background:var(--sign);border-color:var(--sign);color:#fff}
+  .cell.sel .d,.cell.sel .n{color:#fff}
+  .loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+  .sum{border:2px solid var(--ink);padding:14px 16px;margin-top:16px}
+  .sum .none{color:var(--muted);font-size:13px}
+  .sum ul{list-style:none;font-size:13px}
+  .sum li{display:flex;justify-content:space-between;padding:3px 0}
+  .sum li span{font-family:var(--num);font-size:15px}
+  .sum .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);
+    margin-top:10px;padding-top:10px}
+  .sum .total b{font-family:var(--num);font-size:24px;font-weight:700}
+  .go{width:100%;background:var(--sign);color:#fff;border:none;border-radius:2px;padding:16px;
+    font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px}
+  .go:disabled{background:#9AA3AB}
+  .msg{padding:14px 16px;font-size:13px;border-radius:2px;margin-top:16px}
+  .msg.err{background:#FDF3F2;border:1px solid #F0C9C6;color:var(--full)}
+  .msg .en-msg{display:block;margin-top:6px;font-size:11px;opacity:.85}
+  .done{border:2px solid var(--sign);padding:28px 20px;text-align:center}
+  .done .mark{width:52px;height:52px;border-radius:50%;background:var(--sign);color:#fff;display:flex;
+    align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px}
+  .done h1{border:none;font-size:18px}
+  .done p{font-size:13px;margin-top:10px}
+  .done .num{font-family:var(--num);font-weight:700;font-size:17px;border-bottom:2px solid var(--sign)}
+
+  /* ---- 送信中オーバーレイ ---- */
+  .ov{position:fixed;inset:0;background:rgba(255,255,255,.88);display:none;
+    align-items:center;justify-content:center;flex-direction:column;z-index:9999}
+  .ov.on{display:flex}
+  .ov .sp{width:44px;height:44px;border:4px solid var(--line);border-top-color:var(--sign);
+    border-radius:50%;animation:spin .8s linear infinite}
+  .ov p{margin-top:16px;font-size:14px;font-weight:700;color:var(--ink)}
+  .ov p .en{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .invalid{border:2px solid var(--line);padding:28px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="ov" id="ov"><div class="sp"></div><p>変更を処理しています<span class="en">Updating. Please wait a few seconds.</span><span style="display:block;font-size:12px;font-weight:400;margin-top:4px">数秒お待ちください</span></p></div>
+<div class="wrap">
+<div class="invalid" id="invalid" hidden>
+    <h1 style="border:none;color:#1C1F23">変更できません<span class="en" style="display:block;font-size:12px;margin-top:4px">Cannot change</span></h1>
+    <p style="margin-top:12px">このご予約はすでにキャンセルされているか、リンクが無効です。<br>
+      <span class="en">This reservation is already cancelled, or the link is invalid.</span></p>
+  </div>
+  <div id="app" hidden>
+    <h1><span id="cfg-facility"></span> 駐車場 ご予約の変更<span class="en"><span id="cfg-facility-en"></span> — Change reservation</span></h1>
+    <p class="who"><span id="cur-name"></span> 様（現在の予約番号 <span id="cur-id"></span>）<br>
+      <span class="en">Adjust the cars or dates below, then confirm. A new booking number will be issued.</span></p>
+
+    <div class="sec">
+      <h2>台数<span class="en">Cars</span></h2>
+      <div class="counts" id="counts" role="group" aria-label="台数 / Cars"></div>
+    </div>
+
+    <div class="sec">
+      <h2>利用日<span class="en">Dates</span></h2>
+      <div class="nav"><button id="prev" aria-label="前の月">◀</button><b id="ym"></b><button id="next" aria-label="次の月">▶</button></div>
+      <div class="dow"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+      <div class="grid" id="grid"><div class="loading">読み込み中 / Loading</div></div>
+      <div class="sum" id="sum"><p class="none">日付が選ばれていません / No dates selected</p></div>
+    </div>
+
+    <button class="go" id="go">この内容に変更する / Confirm change</button>
+    <div id="msg"></div>
+  </div>
+
+  <div id="done" hidden>
+    <div class="done">
+      <div class="mark">&#10003;</div>
+      <h1>ご予約を変更しました<span class="en" style="display:block;font-size:12px;margin-top:2px">Reservation changed</span></h1>
+      <p>新しい予約番号は <span class="num" id="d-id"></span> です。<br>
+        変更内容の控えメールをお送りしました。<br>
+        <span class="en">A confirmation email with the new details has been sent.</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== 案Z：GAS APIの呼び出し口 =====
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwu2E3Q9009WS3-OREz_Ck3nvA7wAxXL5wDFYIzmls0XlI2Sg0cQIjmIkO6TK3JtbUI/exec';
+  function api(action, data){
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action: action }, data || {})) })
+      .then(function(r){ return r.json(); });
+  }
+  const TOKEN = new URLSearchParams(location.search).get('t') || '';
+  let CFG = null;
+
+  function boot(){
+    document.getElementById('cfg-facility').textContent = CFG.facility;
+    document.getElementById('cfg-facility-en').textContent = CFG.facilityEn;
+    document.title = CFG.facility + ' 駐車場予約の変更';
+    if (!CFG.current) {
+      document.getElementById('invalid').hidden = false;
+      return;
+    }
+    document.getElementById('cur-name').textContent = CFG.current.name;
+    document.getElementById('cur-id').textContent = CFG.current.id;
+    document.getElementById('app').hidden = false;
+    initApp();
+  }
+
+  Promise.all([ api('config'), api('changeInfo', { token: TOKEN }) ])
+    .then(function(res){
+      if(!res[0] || !res[0].ok) throw 0;
+      CFG = res[0];
+      CFG.current = (res[1] && res[1].ok) ? res[1].current : null;
+      boot();
+    })
+    .catch(function(){
+      document.getElementById('invalid').hidden = false;
+    });
+
+  function initApp(){
+    const st = { count: CFG.current.count, sel: new Set(CFG.current.dates), avail:{}, cur:null, busy:false };
+    const pad = n => ('0'+n).slice(-2);
+    const key = (y,m,d) => y+'-'+pad(m+1)+'-'+pad(d);
+    const jp  = s => { const p=s.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]);
+                       return +p[1]+'月'+(+p[2])+'日（'+'日月火水木金土'[d.getDay()]+'）'; };
+
+    const counts = document.getElementById('counts');
+    for(let i=1;i<=CFG.maxCount;i++){
+      const b=document.createElement('button'); b.textContent=i;
+      b.setAttribute('aria-pressed', i===st.count?'true':'false');
+      b.onclick=()=>{ st.count=i; st.sel.clear();
+        [...counts.children].forEach(c=>c.setAttribute('aria-pressed', c===b?'true':'false')); render(); };
+      counts.appendChild(b);
+    }
+
+    const minYM=CFG.minDate.slice(0,7), maxYM=CFG.maxDate.slice(0,7);
+    st.cur = CFG.current.dates[0] ? CFG.current.dates[0].slice(0,7) : minYM;
+    if(st.cur < minYM) st.cur = minYM;
+    document.getElementById('prev').onclick=()=>move(-1);
+    document.getElementById('next').onclick=()=>move(1);
+    function move(step){ const [y,m]=st.cur.split('-').map(Number);
+      const d=new Date(y,m-1+step,1); const ym=d.getFullYear()+'-'+pad(d.getMonth()+1);
+      if(ym<minYM||ym>maxYM) return; st.cur=ym; load(); }
+
+    function load(){
+      document.getElementById('grid').innerHTML='<div class="loading">読み込み中 / Loading</div>';
+      api('availability', { ym: st.cur })
+        .then(r=>{ if(!r || !r.ok) throw 0; st.avail=Object.assign(st.avail, r.availability); render(); })
+        .catch(()=>{ document.getElementById('grid').innerHTML='<div class="loading">読み込み失敗。再読み込みしてください。</div>'; });
+    }
+
+    // 自分の現在の予約日は、残数に自分の台数を足して「変更可能」に見せる
+    function effRemain(k){
+      let r = st.avail[k];
+      if(r===undefined) return undefined;
+      if(CFG.current.dates.indexOf(k)>=0) r += CFG.current.count;
+      return r;
+    }
+
+    function render(){
+      const [y,m]=st.cur.split('-').map(Number);
+      document.getElementById('ym').textContent=y+'年'+m+'月';
+      document.getElementById('prev').disabled=(st.cur<=minYM);
+      document.getElementById('next').disabled=(st.cur>=maxYM);
+      const first=new Date(y,m-1,1), days=new Date(y,m,0).getDate();
+      const g=document.getElementById('grid'); g.innerHTML='';
+      for(let i=0;i<first.getDay();i++){ const e=document.createElement('div'); e.className='cell empty'; g.appendChild(e); }
+      for(let d=1;d<=days;d++){
+        const k=key(y,m-1,d), rem=effRemain(k);
+        const b=document.createElement('button'); b.className='cell';
+        if(rem===undefined){ b.className+=' off'; b.disabled=true; b.innerHTML='<span class="d">'+d+'</span><span class="n">–</span>'; }
+        else if(rem<st.count){ b.className+=' full'; b.disabled=true; b.innerHTML='<span class="d">'+d+'</span><span class="n">満</span>'; }
+        else { if(st.sel.has(k)) b.className+=' sel';
+          b.innerHTML='<span class="d">'+d+'</span><span class="n">'+rem+'</span>';
+          b.onclick=()=>{ st.sel.has(k)?st.sel.delete(k):st.sel.add(k); render(); }; }
+        g.appendChild(b);
+      }
+      const list=[...st.sel].sort();
+      const el=document.getElementById('sum');
+      el.innerHTML = list.length
+        ? '<ul>'+list.map(k=>'<li>'+jp(k)+'<span>'+st.count+' 台</span></li>').join('')+'</ul>'+
+          '<div class="total"><div>合計 <span class="en" style="font-size:11px">Total</span></div><b>'+(list.length*st.count*CFG.price).toLocaleString()+' 円</b></div>'
+        : '<p class="none">日付が選ばれていません / No dates selected</p>';
+    }
+
+    document.getElementById('go').onclick=()=>{
+      if(st.busy) return;
+      const dates=[...st.sel].sort();
+      if(!dates.length){ show('利用日をお選びください。<span class="en-msg">Please select at least one date.</span>'); return; }
+      st.busy=true; const go=document.getElementById('go'); go.disabled=true; go.textContent='変更しています / Updating';
+      document.getElementById('ov').classList.add('on');
+      document.getElementById('msg').innerHTML='';
+      api('change', { token: TOKEN, payload: { count: st.count, dates: dates } })
+        .then(r=>{
+          st.busy=false; go.disabled=false; go.textContent='この内容に変更する / Confirm change';
+          document.getElementById('ov').classList.remove('on');
+          if(r && r.ok){
+            document.getElementById('d-id').textContent=r.id;
+            document.getElementById('app').hidden=true;
+            document.getElementById('done').hidden=false;
+            try{window.scrollTo(0,0);}catch(e){}
+          } else { show((r && r.message) || 'エラーが発生しました。'); }
+        })
+        .catch(()=>{ st.busy=false; go.disabled=false; go.textContent='この内容に変更する / Confirm change';
+          document.getElementById('ov').classList.remove('on');
+          show('変更できませんでした。時間をおいてお試しください。<span class="en-msg">Could not update. Please try again later.</span>'); });
+    };
+
+    function show(html){ document.getElementById('msg').innerHTML='<div class="msg err">'+html+'</div>'; }
+    load();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>駐車場予約のキャンセル / Cancel reservation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',system-ui,sans-serif;color:#1C1F23;background:#fff;
+       line-height:1.8;padding:48px 20px;-webkit-font-smoothing:antialiased}
+  .box{max-width:480px;margin:0 auto;border:2px solid #1C1F23;padding:28px}
+  h1{font-size:17px;font-weight:700;border-bottom:2px solid #1C1F23;padding-bottom:12px;margin-bottom:16px}
+  p{font-size:14px}
+  .en-msg{display:block;margin-top:8px;color:#6E767E;font-size:12px;line-height:1.6}
+  .foot{max-width:480px;margin:20px auto 0;font-size:11px;color:#6E767E;text-align:center}
+  .sp{width:36px;height:36px;border:4px solid #D8DCE0;border-top-color:#0B5FA5;border-radius:50%;
+      animation:spin .8s linear infinite;margin:8px auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1 id="title">キャンセルを処理しています / Cancelling</h1>
+    <p id="body"><span class="sp"></span>そのままお待ちください。<span class="en-msg">Please wait a moment.</span></p>
+  </div>
+  <p class="foot">このページは閉じていただいて構いません。<br>You may now close this page.</p>
+
+<script>
+  // ===== 案Z：GAS APIの呼び出し口 =====
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwu2E3Q9009WS3-OREz_Ck3nvA7wAxXL5wDFYIzmls0XlI2Sg0cQIjmIkO6TK3JtbUI/exec';
+  function api(action, data){
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action: action }, data || {})) })
+      .then(function(r){ return r.json(); });
+  }
+
+  const TOKEN = new URLSearchParams(location.search).get('t') || '';
+  api('cancel', { token: TOKEN })
+    .then(function(r){
+      document.getElementById('title').textContent = (r && r.title) || 'エラー / Error';
+      document.getElementById('body').innerHTML = (r && r.body) ||
+        '処理できませんでした。<span class="en-msg">Could not process.</span>';
+    })
+    .catch(function(){
+      document.getElementById('title').textContent = 'エラー / Error';
+      document.getElementById('body').innerHTML =
+        '処理できませんでした。時間をおいてお試しいただくか、フロントへお問い合わせください。' +
+        '<span class="en-msg">Could not process. Please try again later, or contact the front desk.</span>';
+    });
+</script>
+</body>
+</html>
