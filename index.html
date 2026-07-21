@@ -224,11 +224,8 @@
   <div class="sec">
     <h2>3. お客様情報<span class="en">Your details</span></h2>
 
-    <div class="f"><label for="name">お名前<span class="en">Name</span><i>必須 / Required</i></label>
-      <input id="name" autocomplete="name"></div>
-
-    <div class="f"><label for="kana">お名前（カナ）<span class="en">Name in katakana or roman letters</span><i>必須 / Required</i></label>
-      <input id="kana" autocomplete="off"></div>
+    <div class="f"><label for="kana">お名前（カタカナ）<span class="en">Name in katakana (foreign guests: roman letters)</span><i>必須 / Required</i></label>
+      <input id="kana" autocomplete="name" placeholder="例 / e.g. ヤマダ タロウ"></div>
 
     <div class="f"><label for="email">メールアドレス<span class="en">Email</span><i>必須 / Required</i></label>
       <input id="email" type="email" inputmode="email" autocomplete="email">
@@ -405,7 +402,7 @@
     if(state.busy) return;
     const msg = document.getElementById('msg');
     const payload = {
-      name:  v('name'), kana: v('kana'), email: v('email'), tel: v('tel'),
+      name:  v('kana'), kana: v('kana'), email: v('email'), tel: v('tel'),
       route: v('route'), plate: v('plate'), note: v('note'), website: v('website'),
       count: state.count, dates: [...state.sel].sort(),
       agree: document.getElementById('agree').checked
@@ -449,7 +446,7 @@
   // 続けて予約する：入力を空にしてフォームへ戻る
   document.getElementById('again').onclick = () => {
     state.sel.clear();
-    ['name','kana','email','tel','plate','note'].forEach(id=>document.getElementById(id).value='');
+    ['kana','email','tel','plate','note'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('route').value = '';
     document.getElementById('agree').checked = false;
     document.getElementById('msg').innerHTML = '';
