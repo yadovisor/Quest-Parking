@@ -34,6 +34,12 @@
   .spec .dim{font-family:var(--num);font-size:15px;font-weight:600;letter-spacing:.02em}
   .spec .warn{color:var(--full);font-weight:700;margin-top:4px}
   .spec .en{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+  .spec-block{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .spec-ttl{font-size:12px;font-weight:700;margin-bottom:4px}
+  .spec-block a{color:var(--sign);font-weight:700}
+  .fee{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+  .fee td{border:1px solid var(--line);padding:5px 8px;vertical-align:top}
+  .fee td:last-child{text-align:right;white-space:nowrap;font-weight:700}
     /* ---- 満車時の案内（日付選択の下）---- */
   .full-note{border:1px solid var(--line);border-radius:2px;background:var(--field);
     padding:12px 14px;margin-top:16px;font-size:12px;line-height:1.7}
@@ -182,8 +188,30 @@
   <div class="spec">
     <h3>駐車可能サイズ / Vehicle size limit</h3>
     <div class="dim">車長 500cm以内 ・ 車幅 190cm以内 ・ 車高 制限なし</div>
-    <div class="warn">バス・トラックは駐車できません。</div>
-    <span class="en">Length ≤ 500cm, Width ≤ 190cm, Height: no limit. Buses and trucks cannot be parked.</span>
+    <span class="en">Length ≤ 500cm, Width ≤ 190cm, Height: no limit.</span>
+
+    <div class="spec-block">
+      <div class="spec-ttl">大型車をご利用のお客様へ</div>
+      20名以上のご宿泊に限り、大型車のご予約を承ります。
+      こちらの予約ページは大型車に対応していないため、お手数ですが
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSc6_rYC5OipV2ZbHZUkxUs97utu2-xexBly857vHI3tqv8RPA/viewform" target="_blank" rel="noopener">お問い合わせフォーム</a>
+      よりご依頼ください。
+      <span class="en">Large vehicles can be reserved only for groups of 20＋ guests. This page does not handle large vehicles — please use the inquiry form.</span>
+      <table class="fee">
+        <tr><td>トラック</td><td>3,000円/泊</td></tr>
+        <tr><td>4トントラック</td><td>4,000円/泊</td></tr>
+        <tr><td>マイクロバス・中型バス</td><td>5,000円/泊</td></tr>
+        <tr><td>大型バス</td><td>6,000円/泊</td></tr>
+      </table>
+    </div>
+
+    <div class="spec-block">
+      <div class="spec-ttl">バイク・自転車の駐車について</div>
+      <table class="fee">
+        <tr><td>バイク（〜250cc）・自転車</td><td>2台まで無料/泊<br>3台以上 1,000円/泊（3台ごと）</td></tr>
+        <tr><td>大型バイク（250cc〜）</td><td>1,000円/泊</td></tr>
+      </table>
+    </div>
   </div>
 
   <div class="sec">
