@@ -122,6 +122,11 @@
   textarea{resize:vertical;min-height:70px}
   .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
+  /* ---- キャンセル注意 ---- */
+  .cxl-note{border:1px solid var(--full);background:#FDF3F2;border-radius:2px;
+    padding:12px 14px;margin:16px 0 8px;font-size:13px;line-height:1.65;color:var(--full);font-weight:700}
+  .cxl-note .en{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:4px}
+
   /* ---- 同意 ---- */
   .agree{border:2px solid var(--asphalt);padding:14px 16px;margin:20px 0 8px;
     display:flex;gap:12px;align-items:flex-start;cursor:pointer}
@@ -281,6 +286,11 @@
       <textarea id="note"></textarea></div>
 
     <div class="hp"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"></div>
+
+    <div class="cxl-note">
+      ご宿泊をキャンセルされる場合は、駐車場のご予約もキャンセル手続きをしてください。
+      <span class="en">If you cancel your room reservation, please also cancel your parking reservation.</span>
+    </div>
 
     <label class="agree" for="agree">
       <input type="checkbox" id="agree">
