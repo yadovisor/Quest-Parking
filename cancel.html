@@ -19,36 +19,91 @@
   .sp{width:36px;height:36px;border:4px solid #D8DCE0;border-top-color:#0B5FA5;border-radius:50%;
       animation:spin .8s linear infinite;margin:8px auto}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .info{font-size:14px;margin:8px 0 4px;line-height:1.9}
+  .info .lbl{color:#6E767E;font-size:12px}
+  .btns{display:flex;gap:12px;margin-top:24px}
+  .btns button{flex:1;border-radius:2px;padding:14px;font-family:inherit;font-size:15px;
+    font-weight:700;cursor:pointer;border:1px solid #D8DCE0}
+  .btns .yes{background:#B3261E;border-color:#B3261E;color:#fff}
+  .btns .no{background:#fff;color:#1C1F23}
+  .btns button:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
-  <div class="box">
-    <h1 id="title">キャンセルを処理しています / Cancelling</h1>
+  <div class="box" id="box">
+    <h1 id="title">読み込んでいます / Loading</h1>
     <p id="body"><span class="sp"></span>そのままお待ちください。<span class="en-msg">Please wait a moment.</span></p>
   </div>
   <p class="foot">このページは閉じていただいて構いません。<br>You may now close this page.</p>
 
 <script>
-  // ===== 案Z：GAS APIの呼び出し口 =====
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwu2E3Q9009WS3-OREz_Ck3nvA7wAxXL5wDFYIzmls0XlI2Sg0cQIjmIkO6TK3JtbUI/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwu2E3Q9009WS3-OREz_Ck3nvA7wAxXL5wDFYIzmls0XlI2Sg0cQIjmIkO6TK3JtbUI/exec';
   function api(action, data){
     return fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action: action }, data || {})) })
       .then(function(r){ return r.json(); });
   }
+  var TOKEN = new URLSearchParams(location.search).get('t') || '';
+  var title = document.getElementById('title');
+  var body  = document.getElementById('body');
 
-  const TOKEN = new URLSearchParams(location.search).get('t') || '';
-  api('cancel', { token: TOKEN })
+  // 1) まず予約内容を読み込み、キャンセル確認を表示する（この時点ではキャンセルしない）
+  api('changeInfo', { token: TOKEN })
     .then(function(r){
-      document.getElementById('title').textContent = (r && r.title) || 'エラー / Error';
-      document.getElementById('body').innerHTML = (r && r.body) ||
-        '処理できませんでした。<span class="en-msg">Could not process.</span>';
+      if(!r || !r.ok || !r.current){
+        title.textContent = 'ご予約が見つかりません / Reservation not found';
+        body.innerHTML = 'リンクが正しくないか、すでに手続きが済んでいます。' +
+          '<span class="en-msg">The link is invalid, or the reservation has already been processed.</span>';
+        return;
+      }
+      var c = r.current;
+      var datesJp = (c.dates || []).map(jpDate).join('<br>');
+      title.textContent = 'キャンセルの確認 / Confirm cancellation';
+      body.innerHTML =
+        '<p style="margin-bottom:12px">下記のご予約をキャンセルします。よろしいですか？' +
+        '<span class="en-msg">Are you sure you want to cancel the reservation below?</span></p>' +
+        '<div class="info"><span class="lbl">予約番号 / Booking no.</span><br>' + esc(c.id) + '</div>' +
+        '<div class="info"><span class="lbl">ご利用日 / Dates</span><br>' + datesJp + '</div>' +
+        '<div class="info"><span class="lbl">台数 / Cars</span><br>' + esc(c.count) + ' 台</div>' +
+        '<div class="btns">' +
+        '<button class="no" id="no">いいえ / No</button>' +
+        '<button class="yes" id="yes">キャンセルする / Yes, cancel</button>' +
+        '</div>';
+      document.getElementById('no').onclick = function(){
+        title.textContent = 'キャンセルしていません / Not cancelled';
+        body.innerHTML = 'ご予約はそのまま有効です。' +
+          '<span class="en-msg">Your reservation is still active.</span>';
+      };
+      document.getElementById('yes').onclick = doCancel;
     })
     .catch(function(){
-      document.getElementById('title').textContent = 'エラー / Error';
-      document.getElementById('body').innerHTML =
-        '処理できませんでした。時間をおいてお試しいただくか、フロントへお問い合わせください。' +
-        '<span class="en-msg">Could not process. Please try again later, or contact the front desk.</span>';
+      title.textContent = 'エラー / Error';
+      body.innerHTML = '読み込めませんでした。時間をおいてお試しください。' +
+        '<span class="en-msg">Could not load. Please try again later.</span>';
     });
+
+  // 2) 「はい」を押したときだけキャンセルを実行する
+  function doCancel(){
+    document.getElementById('yes').disabled = true;
+    document.getElementById('no').disabled = true;
+    title.textContent = 'キャンセルを処理しています / Cancelling';
+    body.innerHTML = '<span class="sp"></span>そのままお待ちください。<span class="en-msg">Please wait a moment.</span>';
+    api('cancel', { token: TOKEN })
+      .then(function(r){
+        title.textContent = (r && r.title) || 'エラー / Error';
+        body.innerHTML = (r && r.body) || '処理できませんでした。<span class="en-msg">Could not process.</span>';
+      })
+      .catch(function(){
+        title.textContent = 'エラー / Error';
+        body.innerHTML = '処理できませんでした。時間をおいてお試しいただくか、フロントへお問い合わせください。' +
+          '<span class="en-msg">Could not process. Please try again later, or contact the front desk.</span>';
+      });
+  }
+
+  function jpDate(s){
+    var p = s.split('-'); var d = new Date(+p[0], +p[1]-1, +p[2]);
+    return +p[1]+'月'+(+p[2])+'日（'+'日月火水木金土'[d.getDay()]+'）';
+  }
+  function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
