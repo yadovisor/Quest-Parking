@@ -279,8 +279,6 @@
       <p class="hint">ご宿泊の予約と照合するために伺っています。
         <span class="en">We use this to match your parking booking with your room reservation.</span></p></div>
 
-    <div class="f"><label for="plate">車種・ナンバー<span class="en">Car model and licence plate</span><i class="opt">任意 / Optional</i></label>
-      <input id="plate" placeholder="例 / e.g. 白 プリウス 品川 300 あ 12-34"></div>
 
     <div class="f"><label for="note">ご要望など<span class="en">Requests</span><i class="opt">任意 / Optional</i></label>
       <textarea id="note"></textarea></div>
@@ -441,7 +439,7 @@
     const msg = document.getElementById('msg');
     const payload = {
       name:  v('kana'), kana: v('kana'), email: v('email'), tel: v('tel'),
-      route: v('route'), plate: v('plate'), note: v('note'), website: v('website'),
+      route: v('route'), plate: '', note: v('note'), website: v('website'),
       count: state.count, dates: [...state.sel].sort(),
       agree: document.getElementById('agree').checked
     };
@@ -484,7 +482,7 @@
   // 続けて予約する：入力を空にしてフォームへ戻る
   document.getElementById('again').onclick = () => {
     state.sel.clear();
-    ['kana','email','tel','plate','note'].forEach(id=>document.getElementById(id).value='');
+    ['kana','email','tel','note'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('route').value = '';
     document.getElementById('agree').checked = false;
     document.getElementById('msg').innerHTML = '';
