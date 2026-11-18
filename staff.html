@@ -50,6 +50,8 @@
   .acts button{flex:1;min-width:130px;border-radius:2px;padding:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
   .acts .cx{border:1px solid var(--full);background:#fff;color:var(--full)}
   .acts .ns{border:1px solid var(--muted);background:#fff;color:var(--muted)}
+  .acts .gs{border:1px solid var(--sign);background:#fff;color:var(--sign)}
+  .card .guest{font-size:13px;margin-top:4px;padding:4px 8px;background:#F1F6FA;border-left:3px solid var(--sign)}
   .count{font-size:12px;color:var(--muted);margin:4px 0 10px}
   .foot{font-size:12px;margin-top:24px;text-align:right}
   .foot a{color:var(--muted)}
@@ -265,17 +267,33 @@
       html += '<div class="card'+(on?'':' off')+'">'
         + '<div class="top"><span class="id">'+esc(i.id)+'</span><span class="st '+(on?'ok':'cx')+'">'+esc(i.status)+'</span></div>'
         + '<div class="nm">'+esc(i.name || '（お名前なし）')+' 様</div>'
+        + (i.guest ? '<div class="guest">宿泊者名（照合用）：'+esc(i.guest)+'</div>' : '')
         + '<div class="meta">'+range+'（'+i.nights+'泊）／ '+i.count+'台'+(i.route ? ' ／ '+esc(i.route) : '')+'</div>'
         + ((i.tel || i.note) ? '<div class="sub">'+(i.tel ? 'TEL '+esc(i.tel) : '')+(i.tel && i.note ? '　' : '')+(i.note ? esc(i.note) : '')+'</div>' : '')
-        + (on ? '<div class="acts"><button class="cx" data-id="'+esc(i.id)+'" data-st="キャンセル">キャンセル</button>'
+        + (on ? '<div class="acts"><button class="gs" data-id="'+esc(i.id)+'" data-guest="1">宿泊者名を入力</button>'
+               + '<button class="cx" data-id="'+esc(i.id)+'" data-st="キャンセル">キャンセル</button>'
                + '<button class="ns" data-id="'+esc(i.id)+'" data-st="無断キャンセル">無断キャンセル</button></div>' : '')
         + '</div>';
     });
     box.innerHTML = html;
     box.querySelectorAll('.acts button').forEach(b => b.onclick = () => {
       const it = items.find(x => x.id === b.dataset.id);
-      setStatus(it, b.dataset.st);
+      if (b.dataset.guest) setGuest(it); else setStatus(it, b.dataset.st);
     });
+  }
+
+  // 宿泊者名（照合用）：予約者と宿泊予約の名前が違うときに書き足す。予約者名は変わらない
+  function setGuest(it){
+    const v = prompt(it.id+'　'+(it.name || '')+' 様\n\n宿泊予約でのお名前を入力してください。\n予約者名はそのまま残ります。空にすると消えます。', it.guest || '');
+    if (v === null) return;
+    overlay(true, '登録しています');
+    sapi('staffSetGuest', { id: it.id, guest: v.trim() }).then(r => {
+      overlay(false);
+      if (r && r.ok){
+        fmsg('ok', '<span class="num">'+esc(r.id)+'</span> の宿泊者名を'+(r.guest ? '「'+esc(r.guest)+'」にしました。' : '消しました。'));
+        if (lastQuery) { const keep = document.getElementById('f-msg').innerHTML; search(lastQuery); setTimeout(()=>{ document.getElementById('f-msg').innerHTML = keep; }, 0); }
+      } else { fmsg('err', esc((r && r.message) || '登録できませんでした。')); }
+    }).catch(e => { overlay(false); if (!e || !e.handled) fmsg('err','通信できませんでした。もう一度お試しください。'); });
   }
 
   function setStatus(it, st){
